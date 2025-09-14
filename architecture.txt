@@ -1,0 +1,84 @@
+endpoint-prediction-agent/
+├── README.md
+├── requirements.txt
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+├── service_account_credentials.json
+│
+├── src/
+│   ├── __init__.py
+│   ├── enhanced_api_module.py                    # Main FastAPI server with all endpoints
+│   ├── pdf_processor.py                         # Original PDF processing (preserved)
+│   ├── enhanced_vectorization.py                # Enhanced embedding module with auto-dim
+│   ├── enhanced_faiss_db_manager.py             # Improved FAISS management
+│   ├── rag_module.py                            # Original RAG module (preserved)
+│   ├── gcp_storage_adapter.py                   # Original GCP adapter (preserved)
+│   ├── pipeline.py                              # Original pipeline (preserved)
+│   ├── local_generalization_agent.py            # Original agent (preserved)
+│   │
+│   ├── csv/
+│   │   ├── __init__.py
+│   │   ├── csv_processor.py                     # CSV processing with row-wise chunking
+│   │   └── csv_storage_adapter.py               # GCP integration for CSV indexes
+│   │
+│   ├── retrieval/
+│   │   ├── __init__.py
+│   │   ├── hybrid_retriever.py                  # Combined docs + CSV retrieval
+│   │   └── timepoint_parser.py                  # Extract timing from outcomes
+│   │
+│   └── prediction/
+│       ├── __init__.py
+│       └── endpoint_predictor.py                # LLM orchestration for predictions
+│
+├── scripts/
+│   ├── build_csv_index.py                       # CLI for CSV indexing
+│   ├── test_prediction.py                       # Testing script
+│   └── deploy_to_gcp.py                         # Original deployment (preserved)
+│
+├── indexes/                                      # Local docs indexes
+│   └── <model_id>/
+│       ├── <model_id>.index
+│       └── <model_id>.documents
+│
+├── csv-indexes/                                  # Local CSV indexes
+│   └── <model_id>/
+│       ├── <model_id>.index
+│       └── <model_id>.documents.gz
+│
+├── gcp-indexes/                                  # Downloaded docs indexes
+│   └── <model_id>/
+│       ├── <model_id>.index
+│       └── <model_id>.documents
+│
+├── data/
+│   ├── clinical_trials.csv                      # Sample CSV data
+│   └── sample_pdfs/                             # Sample PDF documents
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_csv_processor.py
+│   ├── test_hybrid_retriever.py
+│   ├── test_endpoint_predictor.py
+│   └── test_api_endpoints.py
+│
+└── docs/
+    ├── API_DOCUMENTATION.md
+    ├── ARCHITECTURE.md
+    ├── DEPLOYMENT_GUIDE.md
+    └── endpoint_prediction_prompt.md            # LLM prompt template
+
+GOOGLE CLOUD STORAGE STRUCTURE:
+gs://{bucket_name}/
+├── localDatasets/                               # Original PDF storage
+│   └── <model_id>/
+│       └── *.pdf
+├── indexes/                                     # Docs indexes
+│   └── <model_id>/
+│       ├── <model_id>.index
+│       └── <model_id>.documents
+└── csv-indexes/                                 # CSV indexes
+    └── <model_id>/
+        ├── <model_id>.index
+        ├── <model_id>.documents.gz
+        └── original.csv

@@ -1,0 +1,28 @@
+# .gitignore for endpoint_prediction_agent_v2
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.gz
+*.index
+*.pdf
+*.docx
+*.doc
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.tar
+*.tar.gz
+*.egg-info/
+.DS_Store
+.env
+*.csv
+# VSCode
+.vscode/
+# Jupyter
+.ipynb_checkpoints/
