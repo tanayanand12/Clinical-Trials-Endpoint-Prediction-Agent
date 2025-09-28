@@ -202,13 +202,79 @@ class EnhancedFaissVectorDB:
             logger.error(f"Error saving vector database: {e}")
             return False
     
+    # def load(self, path: str) -> bool:
+    #     """
+    #     Load vector database with automatic format detection.
+        
+    #     Args:
+    #         path: Path to load (without extension)
+            
+    #     Returns:
+    #         Success status
+    #     """
+    #     try:
+    #         # Load FAISS index
+    #         index_path = f"{path}.index"
+    #         if not os.path.exists(index_path):
+    #             logger.error(f"Index file not found: {index_path}")
+    #             return False
+            
+    #         self.index = faiss.read_index(index_path)
+    #         self.dimension = self.index.d
+            
+    #         # Try to load documents (multiple formats)
+    #         docs_loaded = False
+            
+    #         # Try compressed JSON first
+    #         docs_path_gz = f"{path}.documents.gz"
+    #         if os.path.exists(docs_path_gz):
+    #             with gzip.open(docs_path_gz, 'rt', encoding='utf-8') as f:
+    #                 data = json.load(f)
+    #                 self.documents = data.get('documents', [])
+    #                 self._metadata = data.get('metadata', {})
+    #                 docs_loaded = True
+            
+    #         # Try regular JSON
+    #         if not docs_loaded:
+    #             docs_path = f"{path}.documents"
+    #             if os.path.exists(docs_path):
+    #                 with open(docs_path, 'r', encoding='utf-8') as f:
+    #                     data = json.load(f)
+    #                     if isinstance(data, dict):
+    #                         self.documents = data.get('documents', [])
+    #                         self._metadata = data.get('metadata', {})
+    #                     else:
+    #                         self.documents = data  # Legacy format
+    #                         self._metadata = {}
+    #                     docs_loaded = True
+            
+    #         # Try pickle format (legacy)
+    #         if not docs_loaded:
+    #             pickle_path = f"{path}.documents"
+    #             if os.path.exists(pickle_path):
+    #                 with open(pickle_path, 'rb') as f:
+    #                     self.documents = pickle.load(f)
+    #                     self._metadata = {}
+    #                     docs_loaded = True
+            
+    #         if not docs_loaded:
+    #             logger.error(f"Documents file not found for: {path}")
+    #             return False
+            
+    #         self.is_populated = len(self.documents) > 0
+    #         logger.info(f"Loaded vector database from {path} with {len(self.documents)} documents")
+    #         return True
+            
+    #     except Exception as e:
+    #         logger.error(f"Error loading vector database: {e}")
+    #         return False
+
     def load(self, path: str) -> bool:
         """
         Load vector database with automatic format detection.
         
         Args:
             path: Path to load (without extension)
-            
         Returns:
             Success status
         """
@@ -218,13 +284,12 @@ class EnhancedFaissVectorDB:
             if not os.path.exists(index_path):
                 logger.error(f"Index file not found: {index_path}")
                 return False
-            
             self.index = faiss.read_index(index_path)
             self.dimension = self.index.d
-            
+
             # Try to load documents (multiple formats)
             docs_loaded = False
-            
+
             # Try compressed JSON first
             docs_path_gz = f"{path}.documents.gz"
             if os.path.exists(docs_path_gz):
@@ -233,38 +298,39 @@ class EnhancedFaissVectorDB:
                     self.documents = data.get('documents', [])
                     self._metadata = data.get('metadata', {})
                     docs_loaded = True
-            
-            # Try regular JSON
+
+            # Try regular JSON, fallback to pickle if JSON fails
             if not docs_loaded:
                 docs_path = f"{path}.documents"
                 if os.path.exists(docs_path):
-                    with open(docs_path, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        if isinstance(data, dict):
-                            self.documents = data.get('documents', [])
-                            self._metadata = data.get('metadata', {})
-                        else:
-                            self.documents = data  # Legacy format
-                            self._metadata = {}
-                        docs_loaded = True
-            
-            # Try pickle format (legacy)
+                    try:
+                        with open(docs_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                            if isinstance(data, dict):
+                                self.documents = data.get('documents', [])
+                                self._metadata = data.get('metadata', {})
+                            else:
+                                self.documents = data  # Legacy format
+                                self._metadata = {}
+                            docs_loaded = True
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        # Try pickle if JSON fails
+                        try:
+                            with open(docs_path, 'rb') as f:
+                                self.documents = pickle.load(f)
+                                self._metadata = {}
+                                docs_loaded = True
+                        except Exception as e:
+                            logger.error(f"Failed to load documents as pickle: {e}")
+
             if not docs_loaded:
-                pickle_path = f"{path}.documents"
-                if os.path.exists(pickle_path):
-                    with open(pickle_path, 'rb') as f:
-                        self.documents = pickle.load(f)
-                        self._metadata = {}
-                        docs_loaded = True
-            
-            if not docs_loaded:
-                logger.error(f"Documents file not found for: {path}")
+                logger.error(f"Documents file not found or could not be loaded for: {path}")
                 return False
-            
+
             self.is_populated = len(self.documents) > 0
             logger.info(f"Loaded vector database from {path} with {len(self.documents)} documents")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error loading vector database: {e}")
             return False

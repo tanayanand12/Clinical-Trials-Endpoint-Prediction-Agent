@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class EndpointPredictor:
     """LLM orchestration for clinical trial endpoint timing prediction."""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
         """
         Initialize endpoint predictor.
         
@@ -22,7 +22,7 @@ class EndpointPredictor:
             model: LLM model to use
         """
         load_dotenv()
-        self.model = model
+        self.model = os.getenv("MODEL_ID_GPT5") or model
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         
         if not self.api_key:
@@ -141,7 +141,10 @@ class EndpointPredictor:
         try:
             # Build comprehensive prompt
             prompt = self._build_prediction_prompt(query, evidence)
-            
+            from datetime import datetime
+
+            start_time = datetime.now()
+            logger.info(f"LLM call started at {start_time.isoformat()}")
             # Call LLM
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -155,12 +158,17 @@ class EndpointPredictor:
                         "content": prompt
                     }
                 ],
-                temperature=0.1,
-                max_tokens=1500
+                # temperature=0.1,
+                # max_tokens=1500
+                reasoning_effort = "minimal"
             )
             
             # Parse LLM response
             llm_output = response.choices[0].message.content.strip()
+
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            logger.info(f"LLM call ended at {end_time.isoformat()}, duration: {duration} seconds")
             
             # Extract JSON from response
             prediction = self._parse_llm_response(llm_output)

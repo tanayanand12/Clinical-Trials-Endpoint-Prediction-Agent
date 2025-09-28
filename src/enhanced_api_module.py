@@ -201,6 +201,8 @@ async def upload_pdfs(
 @app.post("/query", response_model=QueryResponse)
 async def query_index(request: QueryRequest):
     """Query the RAG system for answers."""
+
+    start_time = datetime.now()
     try:
         gcp_storage = GCPStorageAdapter(
             bucket_name="intraintel-cloudrun-clinical-volume",    
@@ -238,6 +240,9 @@ async def query_index(request: QueryRequest):
         
         # Generate answer
         response = rag.generate_answer(request.query, documents)
+
+        elapsed_time = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Query processed in {elapsed_time:.2f} seconds")
         
         return {
             "answer": response["answer"],
@@ -349,6 +354,7 @@ async def predict_endpoints(request: EndpointPredictionRequest):
     """Full pipeline for endpoint prediction using hybrid retrieval."""
     try:
         logger.info(f"Starting endpoint prediction for query: {request.query[:100]}...")
+        start_time = datetime.now()
         
         # Step 1: Hybrid retrieval (docs + CSV)
         retrieval_results = await hybrid_retriever.retrieve(
@@ -387,6 +393,8 @@ async def predict_endpoints(request: EndpointPredictionRequest):
             ),
             "similarity": prediction.get("similarity", []),
         }
+
+        logger.info(f"Prediction completed in {(datetime.now() - start_time).total_seconds():.2f} seconds")
         
         return EndpointPredictionResponse(**mapped_prediction)
         

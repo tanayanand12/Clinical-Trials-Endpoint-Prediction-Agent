@@ -3,6 +3,7 @@ import argparse
 import os
 import logging
 from typing import List, Dict, Any
+from datetime import datetime
 from .pdf_processor import PDFProcessor
 from .vectorization import VectorizationModule
 from .faiss_db_manager import FaissVectorDB
@@ -106,6 +107,8 @@ class RAGPipeline:
         Returns:
             Dictionary with answer and citations
         """
+
+        start_time = datetime.now()
         try:
             from .gcp_storage_adapter import GCPStorageAdapter
             # 1. Load the index from GCP
@@ -146,6 +149,8 @@ class RAGPipeline:
             
             # 5. Generate answer
             result = self.rag.generate_answer(query, context_docs)
+
+            logger.info(f"Query processed in {datetime.now() - start_time}")
             
             return result
             
